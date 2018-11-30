@@ -15,6 +15,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 '''
+
+
+'''
+TODO:
+    MVP:
+        add menu to save to stl
+    Clean:
+        add markers mirrored on other sides
+        Make updating ellipse more efficient, scale vertices instead of regenerating
+        break out parameters to be more general
+
+
+'''
 import rospy
 from rospy.numpy_msg import numpy_msg
 from shape_msgs.msg import Mesh
@@ -37,9 +50,11 @@ from interactive_geometry.ellipsoid_generator import *
 from interactive_geometry.mesh_exporter import *
 from interactive_geometry.utils import *
 from interactive_geometry.interactive_marker_utils import  InteractiveMarkerUtils
+import interactive_geometry.global_vars as global_vars
 
 
 menu_handler = MenuHandler()
+
 
 
 if __name__ == '__main__':
@@ -47,13 +62,25 @@ if __name__ == '__main__':
     rospy.init_node('interactive_ellipsoid_node', anonymous=True)
     pub_marker = rospy.Publisher('mesh_marker', Marker, queue_size=10)
 
+    global_vars.a_scale = rospy.get_param('~a')
+    global_vars.b_scale = rospy.get_param('~b')
+    global_vars.c_scale = rospy.get_param('~c')
 
     server = InteractiveMarkerServer("basic_controls")
     broadcaster = TransformBroadcaster()
     listener = TransformListener()
     util = InteractiveMarkerUtils(server, broadcaster, pub_marker)
+
     position = Point(0, 0, 0)
-    util.make6DofMarker( False, InteractiveMarkerControl.NONE, position, True)
+    util.make6DofMarker( False, InteractiveMarkerControl.MOVE_3D, position, True)
+    server.applyChanges()
+
+    position = Point(global_vars.a_scale, 0,  0)
+    util.makeMovingMarker( position, "a", axis=0)
+    position = Point(0, global_vars.b_scale,  0)
+    util.makeMovingMarker( position, "b", axis=1)
+    position = Point(0, 0, global_vars.c_scale)
+    util.makeMovingMarker( position, "c", axis=2)
 
     # 'commit' changes and send to all clients
     server.applyChanges()
@@ -66,14 +93,11 @@ if __name__ == '__main__':
     rate = rospy.Rate(1) # 10hz
     seq = 0
     while not rospy.is_shutdown():
-        a = rospy.get_param('~a')
-        b = rospy.get_param('~b')
-        c = rospy.get_param('~c')
-
         # Generate the ellipse
-        gen = EllipsoidGenerator(a, b, c)
+        gen = EllipsoidGenerator(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale)
         gen.generate_ellipsoid()
-#         Rebroadcast the tf
+
+        # Rebroadcast the tf
         try:
             (trans,rot) = listener.lookupTransform("base_link", "mesh_frame", rospy.Time(0))
             broadcaster.sendTransform( trans, rot, rospy.Time.now(), "mesh_frame", "base_link",)
@@ -84,44 +108,14 @@ if __name__ == '__main__':
 
         # Add/Update mesh
         marker = Marker()
-#        marker = to_triangle_marker_msg(gen.vertices, gen.faces, "world", seq, rospy.Time.now())
-        marker = to_triangle_marker_msg(gen.vertices, gen.faces)
-
-        # TODO: Move this into utility fnc above
-        #Fill header
-        marker.header.frame_id = "mesh_frame"
+        marker = to_triangle_marker_msg(gen.vertices, gen.faces, "mesh_frame", seq, rospy.Time.now())
         marker.header.stamp = rospy.Time.now()
-        marker.header.seq = seq
-        seq += 1
-        marker.ns = "interactive_geometry"
-        marker.id = 0
-        marker.type = Marker.TRIANGLE_LIST
-        marker.action = Marker.ADD;
-        marker.pose.position.x = 0;
-        marker.pose.position.y = 0;
-        marker.pose.position.z = 0;
-        marker.pose.orientation.x = 0.0;
-        marker.pose.orientation.y = 0.0;
-        marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 1.0;
-        marker.scale.x = 1;
-        marker.scale.y = 1;
-        marker.scale.z = 1;
-        marker.color.a = 1.0;
-        marker.color.r = 1.0;
-        marker.color.g = 1.0;
-        marker.color.b = 1.0;
-        marker.lifetime = rospy.Duration(0)
-#        marker.lifetime = rospy.Time.now()
-        marker.frame_locked = True
 
 
 
 
-
-
+        # Publish the mesh
         pub_marker.publish(marker)
-#        print("published mesh")
         rate.sleep()
 
 

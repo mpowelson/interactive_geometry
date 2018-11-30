@@ -1,4 +1,3 @@
-
 from shape_msgs.msg import Mesh
 from shape_msgs.msg import MeshTriangle
 from geometry_msgs.msg import Point
@@ -6,6 +5,7 @@ from visualization_msgs.msg import Marker
 
 
 import numpy as np
+
 
 
 def isNaN(num):
@@ -28,7 +28,7 @@ def to_shape_msgs_mesh(vertices, faces):
 
     return mesh_msg
 
-def to_triangle_marker_msg(vertices, faces):
+def to_triangle_marker_msg(vertices, faces, frame, seq, time):
     marker = Marker()
     for face in faces:
         # There is probably some Pythonic vectorization of this
@@ -54,6 +54,30 @@ def to_triangle_marker_msg(vertices, faces):
         if( not (isNaN(pt.x) or isNaN(pt.y) or isNaN(pt.z))):
             marker.points.append(pt)
 
+        #Fill header
+        marker.header.frame_id = frame
+        marker.header.seq = seq
+        marker.ns = "interactive_geometry"
+        marker.id = 0
+        marker.type = Marker.TRIANGLE_LIST
+        marker.action = Marker.ADD;
+        marker.pose.position.x = 0;
+        marker.pose.position.y = 0;
+        marker.pose.position.z = 0;
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 1;
+        marker.scale.y = 1;
+        marker.scale.z = 1;
+        marker.color.a = 0.8;
+        marker.color.r = 0.0;
+        marker.color.g = 0.25;
+        marker.color.b = 0.75;
+#        marker.lifetime = rospy.Duration(0)
+#        marker.lifetime = rospy.Time.now()
+        marker.frame_locked = True
 
     return marker
 

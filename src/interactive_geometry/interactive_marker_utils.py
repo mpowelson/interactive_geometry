@@ -39,6 +39,8 @@ from math import sin
 
 from interactive_geometry.utils import *
 from interactive_geometry.ellipsoid_generator import *
+import interactive_geometry.global_vars as global_vars
+
 class InteractiveMarkerUtils:
     server = None
     menu_handler = MenuHandler()
@@ -51,19 +53,7 @@ class InteractiveMarkerUtils:
         self.server = serv
         self.br = broadcaster
 
-#    # Not working - The idea was to update the tf associated with the marker to account for the pose, then set the pose to 0
-#    def updateTF(self, pose):
-#        print("Updating TF")
-#        time = rospy.Time.now()
-#        self.br.sendTransform( pose.position, pose.orientation, time, "base_link", "moving_frame" )
-
-
-#    def frameCallback(self, msg):
-#        time = rospy.Time.now()
-#        self.br.sendTransform( (0, 0, sin(self.counter/140.0)*2.0), (0, 0, 0, 1.0), time, "base_link", "moving_frame" )
-#        print("sending frame")
-#        self.counter += 1
-
+    # Gets called whenever the user interacts with a marker
     def processFeedback(self, feedback ):
         s = "Feedback from marker '" + feedback.marker_name
         s += "' / control '" + feedback.control_name + "'"
@@ -81,10 +71,17 @@ class InteractiveMarkerUtils:
             rospy.loginfo( s + ": menu item " + str(feedback.menu_entry_id) + " clicked" + mp + "." )
         elif feedback.event_type == InteractiveMarkerFeedback.POSE_UPDATE:
             rospy.loginfo( s + ": pose changed")
-            # Move mesh_frame to be in the center of the marker
-            trans = feedback.pose.position
-            rot = feedback.pose.orientation
-            self.br.sendTransform( (trans.x, trans.y, trans.z), ( -rot.x, -rot.y, -rot.z, -rot.w), rospy.Time.now(),  "mesh_frame", "base_link" )
+            if feedback.marker_name == 'moving_a':
+                global_vars.a_scale = feedback.pose.position.x
+            elif feedback.marker_name == 'moving_b':
+                global_vars.b_scale = feedback.pose.position.y
+            elif feedback.marker_name == 'moving_c':
+                global_vars.c_scale = feedback.pose.position.z
+            else:
+                # Move mesh_frame to be in the center of the marker
+                trans = feedback.pose.position
+                rot = feedback.pose.orientation
+                self.br.sendTransform( (trans.x, trans.y, trans.z), ( -rot.x, -rot.y, -rot.z, -rot.w), rospy.Time.now(),  "mesh_frame", "base_link" )
 
 
         elif feedback.event_type == InteractiveMarkerFeedback.MOUSE_DOWN:
@@ -126,6 +123,20 @@ class InteractiveMarkerUtils:
 
         return marker
 
+    def makePoint(self, msg ):
+        marker = Marker()
+
+        marker.type = Marker.CUBE
+        marker.scale.x = msg.scale * 0.1
+        marker.scale.y = msg.scale * 0.1
+        marker.scale.z = msg.scale * 0.1
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        marker.color.a = 1.0
+
+        return marker
+
     # Crates a box control
     def makeBoxControl(self, msg ):
         control =  InteractiveMarkerControl()
@@ -140,6 +151,58 @@ class InteractiveMarkerUtils:
 
     #####################################################################
     # Marker Creation
+
+    def make1DofMarker(self, position, name):
+        print("1D marker")
+        # create an interactive marker for our server
+        int_marker = InteractiveMarker()
+        int_marker.header.frame_id = "mesh_link"
+        int_marker.pose.position = position
+        int_marker.name = "marker_" + name
+        int_marker.description = "Simple 1-DOF Control"
+
+
+        # create a grey box marker
+        box_marker = Marker()
+        box_marker.type = Marker.CUBE
+        box_marker.scale.x = 1
+        box_marker.scale.y = 1
+        box_marker.scale.z = 1
+        box_marker.color.r = 1.0
+        box_marker.color.g = 0.0
+        box_marker.color.b = 0.0
+        box_marker.color.a = 1.0
+#        self.makeBoxControl(int_marker)
+
+        # create a non-interactive control which contains the box
+        box_control = InteractiveMarkerControl()
+        box_control.always_visible = True
+        box_control.markers.append( box_marker )
+
+        # add the control to the interactive marker
+        int_marker.controls.append( box_control )
+
+        # create a control which will move the box
+        # this control does not contain any markers,
+        # which will cause RViz to insert two arrows
+        control = InteractiveMarkerControl()
+        control.orientation.w = 1
+        control.orientation.x = 1
+        control.orientation.y = 0
+        control.orientation.z = 0
+        control.name = "move_x"
+        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+#        if fixed:
+#            control.orientation_mode = InteractiveMarkerControl.FIXED
+
+        # add the control to the interactive marker
+#        int_marker.controls.append(control);
+        int_marker.controls.append(copy.deepcopy(control))
+
+        # add the interactive marker to our collection &
+        # tell the server to call processFeedback() when feedback arrives for it
+        self.server.insert(int_marker, self.processFeedback)
+
 
     def make6DofMarker(self, fixed, interaction_mode, position, show_6dof = False):
         int_marker = InteractiveMarker()
@@ -164,10 +227,10 @@ class InteractiveMarkerUtils:
                               InteractiveMarkerControl.ROTATE_3D : "ROTATE_3D",
                               InteractiveMarkerControl.MOVE_ROTATE_3D : "MOVE_ROTATE_3D" }
             int_marker.name += "_" + control_modes_dict[interaction_mode]
-            int_marker.description = "3D Control"
-            if show_6dof:
-              int_marker.description += " + 6-DOF controls"
-            int_marker.description += "\n" + control_modes_dict[interaction_mode]
+#            int_marker.description = "3D Control"
+#            if show_6dof:
+#              int_marker.description += " + 6-DOF controls"
+#            int_marker.description += "\n" + control_modes_dict[interaction_mode]
 
         if show_6dof:
             control = InteractiveMarkerControl()
@@ -401,26 +464,44 @@ class InteractiveMarkerUtils:
         self.server.insert(int_marker, self.processFeedback)
         self.menu_handler.apply( self.server, int_marker.name )
 
-    def makeMovingMarker(self, position):
+    def makeMovingMarker(self, position, name, axis):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "moving_frame"
+        int_marker.header.frame_id = "mesh_frame"
         int_marker.pose.position = position
         int_marker.scale = 1
 
-        int_marker.name = "moving"
-        int_marker.description = "Marker Attached to a\nMoving Frame"
+        int_marker.name = "moving_" + name
+        int_marker.description = ""
 
         control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 1
-        control.orientation.y = 0
-        control.orientation.z = 0
-        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-        int_marker.controls.append(copy.deepcopy(control))
+        if axis == 0:
+            control.orientation.w = 1
+            control.orientation.x = 1
+            control.orientation.y = 0
+            control.orientation.z = 0
+            control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+            int_marker.controls.append(copy.deepcopy(control))
 
-        control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
+        if axis == 1:
+            control.orientation.w = 1
+            control.orientation.x = 0
+            control.orientation.y = 0
+            control.orientation.z = 1
+            control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+            int_marker.controls.append(copy.deepcopy(control))
+
+        if axis == 2:
+             control.orientation.w = 1
+             control.orientation.x = 0
+             control.orientation.y = 1
+             control.orientation.z = 0
+             control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+             int_marker.controls.append(copy.deepcopy(control))
+
+#        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+        control.orientation_mode = InteractiveMarkerControl.FIXED
         control.always_visible = True
-        control.markers.append( self.makeBox(int_marker) )
+        control.markers.append( self.makePoint(int_marker) )
         int_marker.controls.append(control)
 
         self.server.insert(int_marker, self.processFeedback)

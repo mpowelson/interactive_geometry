@@ -52,6 +52,16 @@ class InteractiveMarkerUtils:
         self.pub_marker = pub
         self.server = serv
         self.br = broadcaster
+        self.menu_handler.insert( "Export mesh as STL", callback=self.menuCallback1)
+        self.menu_handler.insert( "Do something else!", callback=self.menuCallback2 )
+
+    def menuCallback1(self, feedback):
+        print("Saving mesh as an STL")
+        # Run save Mesh here
+
+    def menuCallback2(self, feedback):
+        print("Doing something else")
+        # Run save Mesh here
 
     # Gets called whenever the user interacts with a marker
     def processFeedback(self, feedback ):

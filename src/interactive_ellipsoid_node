@@ -28,6 +28,7 @@ from visualization_msgs.msg import InteractiveMarkerControl
 import copy
 from tf.broadcaster import TransformBroadcaster
 from tf.listener import TransformListener
+import tf
 
 import numpy as np
 from stl import mesh
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     # create a timer to update the published transforms
 #    rospy.Timer(rospy.Duration(0.01), util.frameCallback)
 
-    broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), "base_link", "moving_frame" )
+    broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), "base_link", "mesh_frame" )
 
     rate = rospy.Rate(1) # 10hz
     seq = 0
@@ -69,17 +70,26 @@ if __name__ == '__main__':
         b = rospy.get_param('~b')
         c = rospy.get_param('~c')
 
+        # Generate the ellipse
         gen = EllipsoidGenerator(a, b, c)
         gen.generate_ellipsoid()
+#         Rebroadcast the tf
+        try:
+            (trans,rot) = listener.lookupTransform("base_link", "mesh_frame", rospy.Time(0))
+            broadcaster.sendTransform( trans, rot, rospy.Time.now(), "mesh_frame", "base_link",)
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(),  "mesh_frame", "base_link" )
+            print("Resetting TF")
+            continue
 
+        # Add/Update mesh
         marker = Marker()
 #        marker = to_triangle_marker_msg(gen.vertices, gen.faces, "world", seq, rospy.Time.now())
         marker = to_triangle_marker_msg(gen.vertices, gen.faces)
 
-
         # TODO: Move this into utility fnc above
         #Fill header
-        marker.header.frame_id = "moving_frame"
+        marker.header.frame_id = "mesh_frame"
         marker.header.stamp = rospy.Time.now()
         marker.header.seq = seq
         seq += 1
@@ -110,7 +120,7 @@ if __name__ == '__main__':
 
 
 
-#        pub_marker.publish(marker)
+        pub_marker.publish(marker)
 #        print("published mesh")
         rate.sleep()
 

@@ -51,18 +51,18 @@ class InteractiveMarkerUtils:
         self.server = serv
         self.br = broadcaster
 
-    # Not working - The idea was to update the tf associated with the marker to account for the pose, then set the pose to 0
-    def updateTF(self, pose):
-        print("Updating TF")
-        time = rospy.Time.now()
-        self.br.sendTransform( pose.position, pose.orientation, time, "base_link", "moving_frame" )
+#    # Not working - The idea was to update the tf associated with the marker to account for the pose, then set the pose to 0
+#    def updateTF(self, pose):
+#        print("Updating TF")
+#        time = rospy.Time.now()
+#        self.br.sendTransform( pose.position, pose.orientation, time, "base_link", "moving_frame" )
 
 
-    def frameCallback(self, msg):
-        time = rospy.Time.now()
-        self.br.sendTransform( (0, 0, sin(self.counter/140.0)*2.0), (0, 0, 0, 1.0), time, "base_link", "moving_frame" )
-        print("sending frame")
-        self.counter += 1
+#    def frameCallback(self, msg):
+#        time = rospy.Time.now()
+#        self.br.sendTransform( (0, 0, sin(self.counter/140.0)*2.0), (0, 0, 0, 1.0), time, "base_link", "moving_frame" )
+#        print("sending frame")
+#        self.counter += 1
 
     def processFeedback(self, feedback ):
         s = "Feedback from marker '" + feedback.marker_name
@@ -81,37 +81,11 @@ class InteractiveMarkerUtils:
             rospy.loginfo( s + ": menu item " + str(feedback.menu_entry_id) + " clicked" + mp + "." )
         elif feedback.event_type == InteractiveMarkerFeedback.POSE_UPDATE:
             rospy.loginfo( s + ": pose changed")
+            # Move mesh_frame to be in the center of the marker
+            trans = feedback.pose.position
+            rot = feedback.pose.orientation
+            self.br.sendTransform( (trans.x, trans.y, trans.z), ( -rot.x, -rot.y, -rot.z, -rot.w), rospy.Time.now(),  "mesh_frame", "base_link" )
 
-            # TODO: Instead, move a TF to follow. Then the mesh marker as well as the resizing markers can follow that one
-            gen = EllipsoidGenerator(1.2, .6, 1)
-            gen.generate_ellipsoid()
-
-            marker = Marker()
-    #        marker = to_triangle_marker_msg(gen.vertices, gen.faces, "world", seq, rospy.Time.now())
-            marker = to_triangle_marker_msg(gen.vertices, gen.faces)
-
-            print(feedback.pose)
-            # TODO: Move this into utility fnc above
-            #Fill header
-            marker.header.frame_id = "base_link"
-            marker.header.stamp = rospy.Time.now()
-            marker.header.seq = 0
-            marker.ns = "interactive_geometry"
-            marker.id = 0
-            marker.type = Marker.TRIANGLE_LIST
-            marker.action = Marker.ADD;
-            marker.pose = feedback.pose
-            marker.scale.x = 1;
-            marker.scale.y = 1;
-            marker.scale.z = 1;
-            marker.color.a = 1.0;
-            marker.color.r = 1.0;
-            marker.color.g = 1.0;
-            marker.color.b = 1.0;
-            marker.lifetime = rospy.Duration(0)
-    #        marker.lifetime = rospy.Time.now()
-            marker.frame_locked = True
-            self.pub_marker.publish(marker)
 
         elif feedback.event_type == InteractiveMarkerFeedback.MOUSE_DOWN:
             rospy.loginfo( s + ": mouse down" + mp + "." )

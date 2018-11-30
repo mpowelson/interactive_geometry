@@ -15,7 +15,7 @@ class EllipsoidGenerator:
     faces = None
 
 
-    def __init__(self, a, b, c, num_pts = 40):
+    def __init__(self, a, b, c, num_pts = 20):
         self.a = a
         self.b = b
         self.c = c

@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   std_msgs
   rospy
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions

@@ -22,6 +22,12 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA
 
+from interactive_markers.interactive_marker_server import *
+from interactive_markers.menu_handler import *
+from visualization_msgs.msg import InteractiveMarkerControl
+import copy
+from tf.broadcaster import TransformBroadcaster
+from tf.listener import TransformListener
 
 import numpy as np
 from stl import mesh
@@ -29,13 +35,33 @@ from stl import mesh
 from interactive_geometry.ellipsoid_generator import *
 from interactive_geometry.mesh_exporter import *
 from interactive_geometry.utils import *
+from interactive_geometry.interactive_marker_utils import  InteractiveMarkerUtils
 
+
+menu_handler = MenuHandler()
 
 
 if __name__ == '__main__':
-    pub = rospy.Publisher('mesh', Mesh, queue_size=1)
-    pub_marker = rospy.Publisher('mesh_marker', Marker, queue_size=10)
+    # Initialize node, publishers, and interactive marker server
     rospy.init_node('interactive_ellipsoid_node', anonymous=True)
+    pub_marker = rospy.Publisher('mesh_marker', Marker, queue_size=10)
+
+
+    server = InteractiveMarkerServer("basic_controls")
+    broadcaster = TransformBroadcaster()
+    listener = TransformListener()
+    util = InteractiveMarkerUtils(server, broadcaster, pub_marker)
+    position = Point(0, 0, 0)
+    util.make6DofMarker( False, InteractiveMarkerControl.NONE, position, True)
+
+    # 'commit' changes and send to all clients
+    server.applyChanges()
+
+    # create a timer to update the published transforms
+#    rospy.Timer(rospy.Duration(0.01), util.frameCallback)
+
+    broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), "base_link", "moving_frame" )
+
     rate = rospy.Rate(1) # 10hz
     seq = 0
     while not rospy.is_shutdown():
@@ -46,13 +72,14 @@ if __name__ == '__main__':
         gen = EllipsoidGenerator(a, b, c)
         gen.generate_ellipsoid()
 
-        #mesh_msg = to_shape_msgs_mesh(gen.vertices, gen.faces)
-        #pub.publish(mesh_msg)
         marker = Marker()
+#        marker = to_triangle_marker_msg(gen.vertices, gen.faces, "world", seq, rospy.Time.now())
         marker = to_triangle_marker_msg(gen.vertices, gen.faces)
 
+
+        # TODO: Move this into utility fnc above
         #Fill header
-        marker.header.frame_id = "world"
+        marker.header.frame_id = "moving_frame"
         marker.header.stamp = rospy.Time.now()
         marker.header.seq = seq
         seq += 1
@@ -74,14 +101,17 @@ if __name__ == '__main__':
         marker.color.r = 1.0;
         marker.color.g = 1.0;
         marker.color.b = 1.0;
-        #marker.lifetime = rospy.Duration(0)
-        marker.lifetime = rospy.Time.now()
+        marker.lifetime = rospy.Duration(0)
+#        marker.lifetime = rospy.Time.now()
         marker.frame_locked = True
 
 
 
-        pub_marker.publish(marker)
-        print("published mesh")
+
+
+
+#        pub_marker.publish(marker)
+#        print("published mesh")
         rate.sleep()
 
 

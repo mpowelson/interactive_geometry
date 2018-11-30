@@ -48,6 +48,8 @@
   <depend>rospy</depend>
   <depend>shape_msgs</depend>
   <depend>visualization_msgs</depend>
+  <depend>interactive_markers</depend>
+  <depend>tf</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

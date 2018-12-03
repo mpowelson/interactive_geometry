@@ -62,19 +62,25 @@ if __name__ == '__main__':
     rospy.init_node('interactive_ellipsoid_node', anonymous=True)
     pub_marker = rospy.Publisher('mesh_marker', Marker, queue_size=10)
 
+    # Read ROS paramters
     global_vars.a_scale = rospy.get_param('~a')
     global_vars.b_scale = rospy.get_param('~b')
     global_vars.c_scale = rospy.get_param('~c')
+    filename = rospy.get_param('~filename')
 
+    # Set up things
     server = InteractiveMarkerServer("basic_controls")
     broadcaster = TransformBroadcaster()
     listener = TransformListener()
     util = InteractiveMarkerUtils(server, broadcaster, pub_marker)
+    exporter = MeshExporter()
 
+    # Make central control to move mesh
     position = Point(0, 0, 0)
     util.make6DofMarker( False, InteractiveMarkerControl.MOVE_3D, position, True)
     server.applyChanges()
 
+    # Make controls to resize mesh
     position = Point(global_vars.a_scale, 0,  0)
     util.makeMovingMarker( position, "a", axis=0)
     position = Point(0, global_vars.b_scale,  0)
@@ -85,14 +91,12 @@ if __name__ == '__main__':
     # 'commit' changes and send to all clients
     server.applyChanges()
 
-    # create a timer to update the published transforms
-#    rospy.Timer(rospy.Duration(0.01), util.frameCallback)
-
+    # Setup for loop
     broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), "base_link", "mesh_frame" )
-
     rate = rospy.Rate(1) # 10hz
     seq = 0
     while not rospy.is_shutdown():
+
         # Generate the ellipse
         gen = EllipsoidGenerator(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale)
         gen.generate_ellipsoid()
@@ -112,6 +116,11 @@ if __name__ == '__main__':
         marker.header.stamp = rospy.Time.now()
 
 
+        # Save mesh if button clicked
+        if util.save_file == True:
+            exporter.mesh_to_stl(gen.vertices, gen.faces, filename)
+            util.save_file = False
+            print("Exported mesh as " + filename)
 
         # Publish the mesh
         pub_marker.publish(marker)

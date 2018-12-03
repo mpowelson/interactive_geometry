@@ -47,6 +47,7 @@ class InteractiveMarkerUtils:
     br = None
     counter = 0
     pub_marker = None
+    save_file = False
 
     def __init__(self, serv, broadcaster, pub):
         self.pub_marker = pub
@@ -58,6 +59,7 @@ class InteractiveMarkerUtils:
     def menuCallback1(self, feedback):
         print("Saving mesh as an STL")
         # Run save Mesh here
+        self.save_file=True
 
     def menuCallback2(self, feedback):
         print("Doing something else")

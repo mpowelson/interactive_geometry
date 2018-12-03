@@ -8,6 +8,7 @@
         <param name="a" type="double" value="2.3" />
         <param name="b" type="double" value="1.5" />
         <param name="c" type="double" value="3.9" />
+        <param name="filename" type="string" value="/home/mpowelson/workspaces/tpp_working/src/interactive_geometry/output.stl" />
     </node>
 
 </launch>

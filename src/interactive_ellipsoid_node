@@ -27,6 +27,10 @@ TODO:
         interactive_marker_utils process_feedback is specific to the ellipsoid.
         Add second layer of vertices scaled by some small amount to make it look nicer
 
+Note:
+    The stretching controls are in the mesh frame
+    The 6 DOF control in in the parent frame
+    When the 6 dof marker is moved, the mesh_link frame is updated to be on top of it.
 
 '''
 

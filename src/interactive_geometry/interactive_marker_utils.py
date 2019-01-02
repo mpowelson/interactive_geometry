@@ -127,6 +127,7 @@ class InteractiveMarkerUtils:
                 self.server.setPose('moving_c', pose)
                 self.server.applyChanges()
             else:
+                # This is the 6 DOF marker that moves the whole mesh
                 # Move mesh_frame to be in the center of the marker
                 trans = feedback.pose.position
                 rot = feedback.pose.orientation
@@ -138,26 +139,7 @@ class InteractiveMarkerUtils:
         elif feedback.event_type == InteractiveMarkerFeedback.MOUSE_UP:
             rospy.loginfo( s + ": mouse up" + mp + "." )
 
-
         self.server.applyChanges()
-
-    # Used only for the chess piece
-    def alignMarker(self, feedback ):
-        """ Not used """
-        pose = feedback.pose
-
-        pose.position.x = round(pose.position.x-0.5)+0.5
-        pose.position.y = round(pose.position.y-0.5)+0.5
-
-        rospy.loginfo( feedback.marker_name + ": aligning position = " + str(feedback.pose.position.x) + "," + str(feedback.pose.position.y) + "," + str(feedback.pose.position.z) + " to " +
-                                                                         str(pose.position.x) + "," + str(pose.position.y) + "," + str(pose.position.z) )
-
-        self.server.setPose( feedback.marker_name, pose )
-        self.server.applyChanges()
-
-    # Returns a random number between min and max
-    def rand(self, min_, max_ ):
-        return min_ + self.random()*(max_-min_)
 
     def makeBox(self, msg ):
         marker = Marker()
@@ -202,58 +184,6 @@ class InteractiveMarkerUtils:
     #####################################################################
     # Marker Creation
 
-    def make1DofMarker(self, position, name):
-        print("1D marker")
-        # create an interactive marker for our server
-        int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "mesh_link"
-        int_marker.pose.position = position
-        int_marker.name = "marker_" + name
-        int_marker.description = "Simple 1-DOF Control"
-
-
-        # create a grey box marker
-        box_marker = Marker()
-        box_marker.type = Marker.CUBE
-        box_marker.scale.x = 1
-        box_marker.scale.y = 1
-        box_marker.scale.z = 1
-        box_marker.color.r = 1.0
-        box_marker.color.g = 0.0
-        box_marker.color.b = 0.0
-        box_marker.color.a = 1.0
-#        self.makeBoxControl(int_marker)
-
-        # create a non-interactive control which contains the box
-        box_control = InteractiveMarkerControl()
-        box_control.always_visible = True
-        box_control.markers.append( box_marker )
-
-        # add the control to the interactive marker
-        int_marker.controls.append( box_control )
-
-        # create a control which will move the box
-        # this control does not contain any markers,
-        # which will cause RViz to insert two arrows
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 1
-        control.orientation.y = 0
-        control.orientation.z = 0
-        control.name = "move_x"
-        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-#        if fixed:
-#            control.orientation_mode = InteractiveMarkerControl.FIXED
-
-        # add the control to the interactive marker
-#        int_marker.controls.append(control);
-        int_marker.controls.append(copy.deepcopy(control))
-
-        # add the interactive marker to our collection &
-        # tell the server to call processFeedback() when feedback arrives for it
-        self.server.insert(int_marker, self.processFeedback)
-
-
     def make6DofMarker(self, fixed, interaction_mode, position, show_6dof = False):
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self.parent_link
@@ -277,10 +207,6 @@ class InteractiveMarkerUtils:
                               InteractiveMarkerControl.ROTATE_3D : "ROTATE_3D",
                               InteractiveMarkerControl.MOVE_ROTATE_3D : "MOVE_ROTATE_3D" }
             int_marker.name += "_" + control_modes_dict[interaction_mode]
-#            int_marker.description = "3D Control"
-#            if show_6dof:
-#              int_marker.description += " + 6-DOF controls"
-#            int_marker.description += "\n" + control_modes_dict[interaction_mode]
 
         if show_6dof:
             control = InteractiveMarkerControl()
@@ -352,173 +278,12 @@ class InteractiveMarkerUtils:
         self.server.insert(int_marker, self.processFeedback)
         self.menu_handler.apply( self.server, int_marker.name )
 
-    def makerandomDofMarker(self, position ):
-        int_marker = InteractiveMarker()
-        int_marker.header.frame_id = self.parent_link
-        int_marker.pose.position = position
-        int_marker.scale = 1
 
-        int_marker.name = "6dof_self.random_axes"
-        int_marker.description = "6-DOF\n(Arbitrary Axes)"
-
-        self.makeBoxControl(int_marker)
-
-        control = InteractiveMarkerControl()
-
-        for i in range(3):
-            control.orientation.w = self.rand(-1,1)
-            control.orientation.x = self.rand(-1,1)
-            control.orientation.y = self.rand(-1,1)
-            control.orientation.z = self.rand(-1,1)
-            control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-            int_marker.controls.append(copy.deepcopy(control))
-            control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-            int_marker.controls.append(copy.deepcopy(control))
-
-        self.server.insert(int_marker, self.processFeedback)
-
-    def makeViewFacingMarker(self, position):
-        int_marker = InteractiveMarker()
-        int_marker.header.frame_id = self.parent_link
-        int_marker.pose.position = position
-        int_marker.scale = 1
-
-        int_marker.name = "view_facing"
-        int_marker.description = "View Facing 6-DOF"
-
-        # make a control that rotates around the view axis
-        control = InteractiveMarkerControl()
-        control.orientation_mode = InteractiveMarkerControl.VIEW_FACING
-        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-        control.orientation.w = 1
-        control.name = "rotate"
-        int_marker.controls.append(control)
-
-        # create a box in the center which should not be view facing,
-        # but move in the camera plane.
-        control = InteractiveMarkerControl()
-        control.orientation_mode = InteractiveMarkerControl.VIEW_FACING
-        control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
-        control.independent_marker_orientation = True
-        control.name = "move"
-        control.markers.append( self.makeBox(int_marker) )
-        control.always_visible = True
-        int_marker.controls.append(control)
-
-        self.server.insert(int_marker, self.processFeedback)
-
-    def makeQuadrocopterMarker(self, position):
-        int_marker = InteractiveMarker()
-        int_marker.header.frame_id = self.parent_link
-        int_marker.pose.position = position
-        int_marker.scale = 1
-
-        int_marker.name = "quadrocopter"
-        int_marker.description = "Quadrocopter"
-
-        self.makeBoxControl(int_marker)
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 0
-        control.orientation.y = 1
-        control.orientation.z = 0
-        control.interaction_mode = InteractiveMarkerControl.MOVE_ROTATE
-        int_marker.controls.append(copy.deepcopy(control))
-        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-        int_marker.controls.append(control)
-
-        self.server.insert(int_marker, self.processFeedback)
-
-    def makeChessPieceMarker(self, position):
-        int_marker = InteractiveMarker()
-        int_marker.header.frame_id = self.parent_link
-        int_marker.pose.position = position
-        int_marker.scale = 1
-
-        int_marker.name = "chess_piece"
-        int_marker.description = "Chess Piece\n(2D Move + Alignment)"
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 0
-        control.orientation.y = 1
-        control.orientation.z = 0
-        control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
-        int_marker.controls.append(copy.deepcopy(control))
-
-        # make a box which also moves in the plane
-        control.markers.append( self.makeBox(int_marker) )
-        control.always_visible = True
-        int_marker.controls.append(control)
-
-        # we want to use our special callback function
-        self.server.insert(int_marker, self.processFeedback)
-
-        # set different callback for POSE_UPDATE feedback
-        self.server.setCallback(int_marker.name, self.alignMarker, InteractiveMarkerFeedback.POSE_UPDATE )
-
-    def makePanTiltMarker(self, position):
-        int_marker = InteractiveMarker()
-        int_marker.header.frame_id = self.parent_link
-        int_marker.pose.position = position
-        int_marker.scale = 1
-
-        int_marker.name = "pan_tilt"
-        int_marker.description = "Pan / Tilt"
-
-        self.makeBoxControl(int_marker)
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 0
-        control.orientation.y = 1
-        control.orientation.z = 0
-        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-        control.orientation_mode = InteractiveMarkerControl.FIXED
-        int_marker.controls.append(control)
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 0
-        control.orientation.y = 0
-        control.orientation.z = 1
-        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-        control.orientation_mode = InteractiveMarkerControl.INHERIT
-        int_marker.controls.append(control)
-
-        self.server.insert(int_marker, self.processFeedback)
-
-    def makeMenuMarker(self, position):
-        int_marker = InteractiveMarker()
-        int_marker.header.frame_id = self.parent_link
-        int_marker.pose.position = position
-        int_marker.scale = 1
-
-        int_marker.name = "context_menu"
-        int_marker.description = "Context Menu\n(Right Click)"
-
-        # make one control using default visuals
-        control = InteractiveMarkerControl()
-        control.interaction_mode = InteractiveMarkerControl.MENU
-        control.description="Options"
-        control.name = "menu_only_control"
-        int_marker.controls.append(copy.deepcopy(control))
-
-        # make one control showing a box
-        marker = self.makeBox( int_marker )
-        control.markers.append( marker )
-        control.always_visible = True
-        int_marker.controls.append(control)
-
-        self.server.insert(int_marker, self.processFeedback)
-        self.menu_handler.apply( self.server, int_marker.name )
-
-    def makeMovingMarker(self, position, name, axis):
+    def makeMovingMarker(self, position, name, axis, scale=1):
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self.mesh_link
         int_marker.pose.position = position
-        int_marker.scale = 1
+        int_marker.scale = scale
 
         int_marker.name = "moving_" + name
         int_marker.description = ""
@@ -548,7 +313,6 @@ class InteractiveMarkerUtils:
              control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
              int_marker.controls.append(copy.deepcopy(control))
 
-#        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
         control.orientation_mode = InteractiveMarkerControl.FIXED
         control.always_visible = True
         control.markers.append( self.makePoint(int_marker) )

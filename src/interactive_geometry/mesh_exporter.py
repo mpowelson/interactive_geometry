@@ -1,11 +1,22 @@
+"""
+Contains the MeshExporter class for exporting meshes to files
+"""
+
 import numpy as np
 from stl import mesh
 
 class MeshExporter:
+    """Contains various functions for exporting meshes to mesh file formats
+
+    You can currently choose any format known to man - as long as its stl
+    """
     def __init__(self):
         print("")
 
     def mesh_to_stl(self, vertices, faces, filename):
+        """
+        Exports a set of vertices and faces as an stl to the given filename using the stl library
+        """
         print("Saving mesh as stl")
         # Create the mesh
         output = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))

@@ -24,6 +24,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 """
 
+"""
+Most of these are not being used. The ones that are are pretty modified.
+
+TODO: Replace all of this with my own code that works a little better for this purpose and is easier to read. I just used the example for prototyping.
+"""
+
 import rospy
 import copy
 
@@ -68,6 +74,10 @@ class InteractiveMarkerUtils:
 
     # Gets called whenever the user interacts with a marker
     def processFeedback(self, feedback ):
+        """Gets called whenever the user interacts with a marker. Also updaes the global_vars to scale geometry
+
+        Mouse info is not used
+        """
         s = "Feedback from marker '" + feedback.marker_name
         s += "' / control '" + feedback.control_name + "'"
 
@@ -130,6 +140,7 @@ class InteractiveMarkerUtils:
 
     # Used only for the chess piece
     def alignMarker(self, feedback ):
+        """ Not used """
         pose = feedback.pose
 
         pose.position.x = round(pose.position.x-0.5)+0.5

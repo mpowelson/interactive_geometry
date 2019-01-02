@@ -1,7 +1,19 @@
+""" This module obviously contains the EllipsoidGenerator class.
+
+In the future, maybe this will contain other generators as well. Or maybe I'll keep it to one generator per file. I haven't decided yet.
+"""
+
 import numpy as np
 from stl import mesh
 
+
 class EllipsoidGenerator:
+    """ Used to generate a half-ellipsoid mesh.
+
+    Upon construction, a sphere of vertices is created. Then the sphere vertices are streched into an ellipsoid and the faces are created
+    TODO: Add an "update ellipsoid" that remembers the faces and just moves the vertices. Should be much faster. (Maybe not even needed if passed by ref. Look into this regardless)
+    TODO: Make configurable to generate half ellipsoid, full ellipsoid, etc.
+    """
     a = 1
     b = 1
     c = 1
@@ -25,19 +37,20 @@ class EllipsoidGenerator:
 
         self.generate_sphere()
 
-    # Generate a unit sphere with desired sampling
     def generate_sphere(self):
-        # Generate Sphere
-
+        """Generate a unit sphere with desired sampling """
         self.z_sphere = np.linspace(-1, 1, self.num_pts+2)[1:-1]
         r = np.sqrt(1.0 - self.z_sphere**2)[:,None]
         theta = np.linspace(0, self.rotation, self.num_pts+1)[:-1][None,:]
         self.x_sphere = r*np.cos(theta)
         self.y_sphere = r*np.sin(theta)
 
-    # Generate ellipsoid from sphere using the stored a,b,c values
-    # TODO: Put in center vertex/faces if needed
+
     def generate_ellipsoid(self):
+        """Generate ellipsoid from sphere using the stored a,b,c values
+
+        TODO: Put in center vertex/faces if needed
+        """
         x = self.a * self.x_sphere
         y = self.b * self.y_sphere
         z = self.c * self.z_sphere

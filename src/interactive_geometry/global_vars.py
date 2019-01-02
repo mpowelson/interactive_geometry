@@ -1,4 +1,8 @@
-# I know this is probably bad practice. Shoot me.
+""" Contains the global variables needed by this package.
+
+I know this is probably bad practice. Shoot me.
+"""
+
 
 a_scale = 1.
 b_scale = 1.

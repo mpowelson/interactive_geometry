@@ -1,3 +1,8 @@
+""" Contains utility functions for converting python types to ROS types.
+
+In the future this could be expanded to containt other utilities. That is just how it worked out right now.
+"""
+
 from shape_msgs.msg import Mesh
 from shape_msgs.msg import MeshTriangle
 from geometry_msgs.msg import Point
@@ -9,9 +14,15 @@ import numpy as np
 
 
 def isNaN(num):
+    """
+    Returns true if a number is NaN without using numpy or math
+    """
     return num != num
 
 def to_shape_msgs_mesh(vertices, faces):
+    """
+    Converts a set of vertices and faces to a ROS shape_msgs Mesh message
+    """
     mesh_msg = Mesh()
     for face in faces:
         triangle = MeshTriangle()
@@ -29,6 +40,9 @@ def to_shape_msgs_mesh(vertices, faces):
     return mesh_msg
 
 def to_triangle_marker_msg(vertices, faces, frame, seq, time):
+    """
+    Converts a set of vertices and faces to a ROS visualization_msgs triangle Marker message
+    """
     marker = Marker()
     for face in faces:
         # There is probably some Pythonic vectorization of this

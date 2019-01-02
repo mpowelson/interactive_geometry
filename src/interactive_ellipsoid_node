@@ -45,6 +45,7 @@ import tf
 
 # Import pure Python modules
 import numpy as np
+import rospkg
 
 # Import package modules
 from interactive_geometry.ellipsoid_generator import *
@@ -61,11 +62,12 @@ if __name__ == '__main__':
     rospy.init_node('interactive_ellipsoid_node', anonymous=True)
     pub_marker = rospy.Publisher('mesh_marker', Marker, queue_size=10)
 
-    # Read ROS paramters
-    global_vars.a_scale = rospy.get_param('~a')
-    global_vars.b_scale = rospy.get_param('~b')
-    global_vars.c_scale = rospy.get_param('~c')
-    filename = rospy.get_param('~filename')
+    # Read ROS parameters
+    global_vars.a_scale = rospy.get_param('~a', 1.0)
+    global_vars.b_scale = rospy.get_param('~b', 1.0)
+    global_vars.c_scale = rospy.get_param('~c', 1.0)
+    rospack = rospkg.RosPack()
+    filename = rospy.get_param('~filename', rospack.get_path('interactive_geometry') + '/output.stl')
 
     # Set up things
     server = InteractiveMarkerServer("basic_controls")

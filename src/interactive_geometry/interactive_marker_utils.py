@@ -57,6 +57,7 @@ class InteractiveMarkerUtils:
     pub_marker = None
     save_file = False
     parent_link = "world"
+    mesh_link = "mesh_frame"
 
     def __init__(self, serv, broadcaster, pub):
         self.pub_marker = pub
@@ -129,7 +130,7 @@ class InteractiveMarkerUtils:
                 # Move mesh_frame to be in the center of the marker
                 trans = feedback.pose.position
                 rot = feedback.pose.orientation
-                self.br.sendTransform( (trans.x, trans.y, trans.z), ( -rot.x, -rot.y, -rot.z, -rot.w), rospy.Time.now(),  "mesh_frame", self.parent_link )
+                self.br.sendTransform( (trans.x, trans.y, trans.z), ( -rot.x, -rot.y, -rot.z, -rot.w), rospy.Time.now(),  self.mesh_link, self.parent_link )
 
 
         elif feedback.event_type == InteractiveMarkerFeedback.MOUSE_DOWN:
@@ -515,7 +516,7 @@ class InteractiveMarkerUtils:
 
     def makeMovingMarker(self, position, name, axis):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "mesh_frame"
+        int_marker.header.frame_id = self.mesh_link
         int_marker.pose.position = position
         int_marker.scale = 1
 

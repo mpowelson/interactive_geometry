@@ -20,7 +20,6 @@ limitations under the License.
 '''
 TODO:
     Clean:
-        break out parameters to be more general (ie the parent link)
         scale interactive marker based on size of ellipse
 
     Future:
@@ -69,13 +68,17 @@ if __name__ == '__main__':
     filename = rospy.get_param('~filename', rospack.get_path('interactive_geometry') + '/output.stl')
     num_pts = rospy.get_param('~num_pts', 20)
     parent_link = rospy.get_param('~parent_link', 'world')
+    mesh_link = rospy.get_param('~mesh_link', 'mesh_frame')
 
-    # Set up things
+    # Set Marker server and TF
     server = InteractiveMarkerServer("basic_controls")
     broadcaster = TransformBroadcaster()
     listener = TransformListener()
+
+    # Set up generation utilities
     util = InteractiveMarkerUtils(server, broadcaster, pub_marker)
     util.parent_link = parent_link
+    util.mesh_link = mesh_link
     exporter = MeshExporter()
 
     # Make central control to move mesh
@@ -105,7 +108,7 @@ if __name__ == '__main__':
     gen.generate_ellipsoid()
 
     # Setup for loop
-    broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), parent_link, "mesh_frame" )
+    broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), parent_link, mesh_link )
     rate = rospy.Rate(30) # 30hz
     seq = 0
     while not rospy.is_shutdown():
@@ -115,16 +118,16 @@ if __name__ == '__main__':
 
         # Rebroadcast the tf
         try:
-            (trans,rot) = listener.lookupTransform(parent_link, "mesh_frame", rospy.Time(0))
-            broadcaster.sendTransform( trans, rot, rospy.Time.now(), "mesh_frame", parent_link,)
+            (trans,rot) = listener.lookupTransform(parent_link, mesh_link, rospy.Time(0))
+            broadcaster.sendTransform( trans, rot, rospy.Time.now(), mesh_link, parent_link,)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(),  "mesh_frame", parent_link )
+            broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(),  mesh_link, parent_link )
             print("Resetting TF")
             continue
 
         # Add/Update mesh
         marker = Marker()
-        marker = to_triangle_marker_msg(gen.vertices, gen.faces, "mesh_frame", seq, rospy.Time.now())
+        marker = to_triangle_marker_msg(gen.vertices, gen.faces, mesh_link, seq, rospy.Time.now())
         marker.header.stamp = rospy.Time.now()
 
         # Save mesh if button clicked

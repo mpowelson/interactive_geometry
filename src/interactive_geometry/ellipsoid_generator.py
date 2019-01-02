@@ -9,7 +9,6 @@ class EllipsoidGenerator:
     """ Used to generate a half-ellipsoid mesh.
 
     Upon construction, a sphere of vertices is created. Then the sphere vertices are streched into an ellipsoid and the faces are created
-    TODO: Add an "update ellipsoid" that remembers the faces and just moves the vertices. Should be much faster. (Maybe not even needed if passed by ref. Look into this regardless)
     TODO: Make configurable to generate half ellipsoid, full ellipsoid, etc.
     """
     a = 1
@@ -21,6 +20,7 @@ class EllipsoidGenerator:
     x_sphere = None
     y_sphere = None
     z_sphere = None
+    vertices_sphere = None
     vertices = None
     faces = None
 
@@ -49,15 +49,17 @@ class EllipsoidGenerator:
 
         TODO: Put in center vertex/faces if needed
         """
-        x = self.a * self.x_sphere
-        y = self.b * self.y_sphere
-        z = self.c * self.z_sphere
 
-        # Form vertices
-        vertices = np.empty([self.num_pts*self.num_pts,3])
+        # Store sphere vertices as x, y, z for convenience
+        x = self.x_sphere
+        y = self.y_sphere
+        z = self.z_sphere
+
+        # Form vertices. This is really just setting their location in the array. They are still a sphere
+        vertices_sphere = np.empty([self.num_pts*self.num_pts,3])
         for i in range(self.num_pts):
-            vertices[i*self.num_pts:(i+1)*self.num_pts,:] = np.array([x[:,i], y[:,i], z]).T
-        self.vertices = vertices
+            vertices_sphere[i*self.num_pts:(i+1)*self.num_pts,:] = np.array([x[:,i], y[:,i], z]).T
+        self.vertices_sphere = vertices_sphere
 
         # Form the faces
         num_faces = (self.num_pts-1)**2*2
@@ -80,5 +82,16 @@ class EllipsoidGenerator:
                 faces[ind+1] = np.array([v3,v2,v1])
                 ind += 2
         self.faces = faces
+
+        # Stretch the sphere into an ellipsoid
+        self.update_ellipsoid(self.a, self.b, self.c)
+
+    def update_ellipsoid(self, a, b, c):
+        self.vertices = np.matmul(self.vertices_sphere, np.array([[a, 0, 0], [0, b, 0], [0, 0, c]]))
+
+
+
+
+
 
 

@@ -20,8 +20,7 @@ limitations under the License.
 '''
 TODO:
     Clean:
-        Make updating ellipse more efficient, scale vertices instead of regenerating
-        break out parameters to be more general
+        break out parameters to be more general (ie the parent link)
         scale interactive marker based on size of ellipse
 
     Future:
@@ -98,15 +97,18 @@ if __name__ == '__main__':
     # 'commit' changes and send to all clients
     server.applyChanges()
 
+    # Generate the initial ellipsoid
+    gen = EllipsoidGenerator(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale)
+    gen.generate_ellipsoid()
+
     # Setup for loop
     broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), "base_link", "mesh_frame" )
-    rate = rospy.Rate(1) # 10hz
+    rate = rospy.Rate(30) # 30hz
     seq = 0
     while not rospy.is_shutdown():
 
-        # Generate the ellipse
-        gen = EllipsoidGenerator(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale)
-        gen.generate_ellipsoid()
+        # Update the ellipsoid
+        gen.update_ellipsoid(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale)
 
         # Rebroadcast the tf
         try:
@@ -122,7 +124,6 @@ if __name__ == '__main__':
         marker = to_triangle_marker_msg(gen.vertices, gen.faces, "mesh_frame", seq, rospy.Time.now())
         marker.header.stamp = rospy.Time.now()
 
-
         # Save mesh if button clicked
         if util.save_file == True:
             exporter.mesh_to_stl(gen.vertices, gen.faces, filename)
@@ -132,10 +133,4 @@ if __name__ == '__main__':
         # Publish the mesh
         pub_marker.publish(marker)
         rate.sleep()
-
-
-
-#    export = MeshExporter()
-#    export.mesh_to_stl(gen.vertices, gen.faces, "output.stl")
-
 

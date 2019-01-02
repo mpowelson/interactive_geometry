@@ -4,8 +4,6 @@ In the future, maybe this will contain other generators as well. Or maybe I'll k
 """
 
 import numpy as np
-from stl import mesh
-
 
 class EllipsoidGenerator:
     """ Used to generate a half-ellipsoid mesh.

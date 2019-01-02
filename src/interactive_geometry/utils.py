@@ -8,11 +8,6 @@ from shape_msgs.msg import MeshTriangle
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker
 
-
-import numpy as np
-
-
-
 def isNaN(num):
     """
     Returns true if a number is NaN without using numpy or math

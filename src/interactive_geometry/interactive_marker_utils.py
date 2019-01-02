@@ -30,9 +30,10 @@ Most of these are not being used. The ones that are are pretty modified.
 TODO: Replace all of this with my own code that works a little better for this purpose and is easier to read. I just used the example for prototyping.
 """
 
-import rospy
-import copy
 
+
+# Import ROS modules
+import rospy
 from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
 from visualization_msgs.msg import *
@@ -40,12 +41,12 @@ from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
 from tf.broadcaster import TransformBroadcaster
 
+# Import pure Python modules
 from random import random
 from math import sin
+import copy
 
-
-from interactive_geometry.utils import *
-from interactive_geometry.ellipsoid_generator import *
+# Import package modules
 import interactive_geometry.global_vars as global_vars
 
 class InteractiveMarkerUtils:

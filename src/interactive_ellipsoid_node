@@ -23,32 +23,30 @@ TODO:
         Make updating ellipse more efficient, scale vertices instead of regenerating
         break out parameters to be more general
         scale interactive marker based on size of ellipse
-        Clean imports (np where not needed, etc)
 
     Future:
         Explore making the triangle mesh marker the center of the 6 dof one instead of a box
         interactive_marker_utils process_feedback is specific to the ellipsoid.
+        Add second layer of vertices scaled by some small amount to make it look nicer
 
 
 '''
+
+# Import ROS modules
 import rospy
-from rospy.numpy_msg import numpy_msg
-from shape_msgs.msg import Mesh
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
-from std_msgs.msg import ColorRGBA
-
 from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
 from visualization_msgs.msg import InteractiveMarkerControl
-import copy
 from tf.broadcaster import TransformBroadcaster
 from tf.listener import TransformListener
 import tf
 
+# Import pure Python modules
 import numpy as np
-from stl import mesh
 
+# Import package modules
 from interactive_geometry.ellipsoid_generator import *
 from interactive_geometry.mesh_exporter import *
 from interactive_geometry.utils import *
@@ -57,8 +55,6 @@ import interactive_geometry.global_vars as global_vars
 
 
 menu_handler = MenuHandler()
-
-
 
 if __name__ == '__main__':
     # Initialize node, publishers, and interactive marker server

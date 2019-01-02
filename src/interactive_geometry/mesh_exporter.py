@@ -2,7 +2,7 @@
 Contains the MeshExporter class for exporting meshes to files
 """
 
-import numpy as np
+from numpy import zeros
 from stl import mesh
 
 class MeshExporter:
@@ -19,7 +19,7 @@ class MeshExporter:
         """
         print("Saving mesh as stl")
         # Create the mesh
-        output = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+        output = mesh.Mesh(zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
         for i, f in enumerate(faces.astype(int)):
             for j in range(3):
                 output.vectors[i][j] = vertices[f[j],:]

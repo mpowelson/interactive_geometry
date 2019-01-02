@@ -31,6 +31,7 @@ from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
 from visualization_msgs.msg import *
 from geometry_msgs.msg import Point
+from geometry_msgs.msg import Pose
 from tf.broadcaster import TransformBroadcaster
 
 from random import random
@@ -63,7 +64,7 @@ class InteractiveMarkerUtils:
 
     def menuCallback2(self, feedback):
         print("Doing something else")
-        # Run save Mesh here
+
 
     # Gets called whenever the user interacts with a marker
     def processFeedback(self, feedback ):
@@ -84,11 +85,34 @@ class InteractiveMarkerUtils:
         elif feedback.event_type == InteractiveMarkerFeedback.POSE_UPDATE:
             rospy.loginfo( s + ": pose changed")
             if feedback.marker_name == 'moving_a':
+                # Update the scale of the ellipse
                 global_vars.a_scale = feedback.pose.position.x
+                # Now update the mirrored marker
+                pose = copy.deepcopy(feedback.pose)
+                pose.position = Point(-1*global_vars.a_scale, 0, 0)
+                self.server.setPose('moving_a_neg', pose)
+                self.server.applyChanges()
             elif feedback.marker_name == 'moving_b':
                 global_vars.b_scale = feedback.pose.position.y
+                # b is one sided, so there is no other marker to update
             elif feedback.marker_name == 'moving_c':
                 global_vars.c_scale = feedback.pose.position.z
+                pose = copy.deepcopy(feedback.pose)
+                pose.position = Point(0, 0, -1*global_vars.c_scale)
+                self.server.setPose('moving_c_neg', pose)
+                self.server.applyChanges()
+            elif feedback.marker_name == 'moving_a_neg':
+                global_vars.a_scale = -1*feedback.pose.position.x
+                pose = copy.deepcopy(feedback.pose)
+                pose.position = Point(global_vars.a_scale, 0, 0)
+                self.server.setPose('moving_a', pose)
+                self.server.applyChanges()
+            elif feedback.marker_name == 'moving_c_neg':
+                global_vars.c_scale = -1*feedback.pose.position.z
+                pose = copy.deepcopy(feedback.pose)
+                pose.position = Point(0, 0, global_vars.c_scale)
+                self.server.setPose('moving_c', pose)
+                self.server.applyChanges()
             else:
                 # Move mesh_frame to be in the center of the marker
                 trans = feedback.pose.position

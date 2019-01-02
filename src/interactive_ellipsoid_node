@@ -19,12 +19,15 @@ limitations under the License.
 
 '''
 TODO:
-    MVP:
-        add menu to save to stl
     Clean:
-        add markers mirrored on other sides
         Make updating ellipse more efficient, scale vertices instead of regenerating
         break out parameters to be more general
+        scale interactive marker based on size of ellipse
+        Add docstrings
+
+    Future:
+        Explore making the triangle mesh marker the center of the 6 dof one instead of a box
+        interactive_marker_utils process_feedback is specific to the ellipsoid.
 
 
 '''
@@ -77,16 +80,22 @@ if __name__ == '__main__':
 
     # Make central control to move mesh
     position = Point(0, 0, 0)
-    util.make6DofMarker( False, InteractiveMarkerControl.MOVE_3D, position, True)
+    util.make6DofMarker(False, InteractiveMarkerControl.MOVE_3D, position, True)
     server.applyChanges()
 
-    # Make controls to resize mesh
+    # Make controls to resize mesh (positive direction)
     position = Point(global_vars.a_scale, 0,  0)
     util.makeMovingMarker( position, "a", axis=0)
     position = Point(0, global_vars.b_scale,  0)
     util.makeMovingMarker( position, "b", axis=1)
     position = Point(0, 0, global_vars.c_scale)
     util.makeMovingMarker( position, "c", axis=2)
+
+    # Make controls to resize mesh (negative directon)
+    position = Point(-1*global_vars.a_scale, 0,  0)
+    util.makeMovingMarker( position, "a_neg", axis=0)
+    position = Point(0, 0, -1*global_vars.c_scale)
+    util.makeMovingMarker( position, "c_neg", axis=2)
 
     # 'commit' changes and send to all clients
     server.applyChanges()

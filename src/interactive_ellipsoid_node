@@ -19,12 +19,9 @@ limitations under the License.
 
 '''
 TODO:
-    Clean:
-        scale interactive marker based on size of ellipse
-
     Future:
-        Explore making the triangle mesh marker the center of the 6 dof one instead of a box
-        interactive_marker_utils process_feedback is specific to the ellipsoid.
+        Scale interactive marker based on size of ellipse
+        Interactive_marker_utils process_feedback is specific to the ellipsoid.
         Add second layer of vertices scaled by some small amount to make it look nicer
 
 Note:

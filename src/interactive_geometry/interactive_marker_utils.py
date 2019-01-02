@@ -141,13 +141,14 @@ class InteractiveMarkerUtils:
 
         self.server.applyChanges()
 
-    def makeBox(self, msg ):
+    def makeBox(self, msg, x_scale=0.5, y_scale=0.5, z_scale=0.5):
+        """Makes a large box marker that we are calling a box"""
         marker = Marker()
 
         marker.type = Marker.CUBE
-        marker.scale.x = msg.scale * 0.45
-        marker.scale.y = msg.scale * 0.45
-        marker.scale.z = msg.scale * 0.45
+        marker.scale.x = msg.scale * x_scale
+        marker.scale.y = msg.scale * y_scale
+        marker.scale.z = msg.scale * z_scale
         marker.color.r = 0.5
         marker.color.g = 0.5
         marker.color.b = 0.5
@@ -155,13 +156,14 @@ class InteractiveMarkerUtils:
 
         return marker
 
-    def makePoint(self, msg ):
+    def makePoint(self, msg, x_scale=0.1, y_scale=0.1, z_scale=0.1):
+        """Makes a small box marker that we call a point"""
         marker = Marker()
 
         marker.type = Marker.CUBE
-        marker.scale.x = msg.scale * 0.1
-        marker.scale.y = msg.scale * 0.1
-        marker.scale.z = msg.scale * 0.1
+        marker.scale.x = msg.scale * x_scale
+        marker.scale.y = msg.scale * y_scale
+        marker.scale.z = msg.scale * z_scale
         marker.color.r = 1.0
         marker.color.g = 0.0
         marker.color.b = 0.0
@@ -169,22 +171,21 @@ class InteractiveMarkerUtils:
 
         return marker
 
-    # Crates a box control
     def makeBoxControl(self, msg ):
+        """Make a box marker and then add a control to it"""
         control =  InteractiveMarkerControl()
         control.always_visible = True
         control.markers.append( self.makeBox(msg) )
         msg.controls.append( control )
         return control
 
-    def saveMarker(self, int_marker ):
-      self.server.insert(int_marker, self.processFeedback)
-
-
     #####################################################################
     # Marker Creation
 
     def make6DofMarker(self, fixed, interaction_mode, position, show_6dof = False):
+        """
+        Makes a marker with a 6 DOF control that is both draggable and has the arrows and rotation ribbon if show_6dof=true
+        """
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self.parent_link
         int_marker.pose.position = position
@@ -193,7 +194,7 @@ class InteractiveMarkerUtils:
         int_marker.name = "simple_6dof"
         int_marker.description = ""
 
-        # insert a box
+        # insert a box control that makes it draggable
         self.makeBoxControl(int_marker)
         int_marker.controls[0].interaction_mode = interaction_mode
 
@@ -208,6 +209,7 @@ class InteractiveMarkerUtils:
                               InteractiveMarkerControl.MOVE_ROTATE_3D : "MOVE_ROTATE_3D" }
             int_marker.name += "_" + control_modes_dict[interaction_mode]
 
+        # Add the arrows and rotation ribbons to make it movable that way
         if show_6dof:
             control = InteractiveMarkerControl()
             control.orientation.w = 1
@@ -280,6 +282,11 @@ class InteractiveMarkerUtils:
 
 
     def makeMovingMarker(self, position, name, axis, scale=1):
+        """
+        Makes a marker at a point and adds a linear control in one axis
+
+        Used to stretch the ellipsoid, etc.
+        """
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self.mesh_link
         int_marker.pose.position = position

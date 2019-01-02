@@ -56,6 +56,7 @@ class InteractiveMarkerUtils:
     counter = 0
     pub_marker = None
     save_file = False
+    parent_link = "world"
 
     def __init__(self, serv, broadcaster, pub):
         self.pub_marker = pub
@@ -128,7 +129,7 @@ class InteractiveMarkerUtils:
                 # Move mesh_frame to be in the center of the marker
                 trans = feedback.pose.position
                 rot = feedback.pose.orientation
-                self.br.sendTransform( (trans.x, trans.y, trans.z), ( -rot.x, -rot.y, -rot.z, -rot.w), rospy.Time.now(),  "mesh_frame", "base_link" )
+                self.br.sendTransform( (trans.x, trans.y, trans.z), ( -rot.x, -rot.y, -rot.z, -rot.w), rospy.Time.now(),  "mesh_frame", self.parent_link )
 
 
         elif feedback.event_type == InteractiveMarkerFeedback.MOUSE_DOWN:
@@ -254,7 +255,7 @@ class InteractiveMarkerUtils:
 
     def make6DofMarker(self, fixed, interaction_mode, position, show_6dof = False):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "base_link"
+        int_marker.header.frame_id = self.parent_link
         int_marker.pose.position = position
         int_marker.scale = 1
 
@@ -352,7 +353,7 @@ class InteractiveMarkerUtils:
 
     def makerandomDofMarker(self, position ):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "base_link"
+        int_marker.header.frame_id = self.parent_link
         int_marker.pose.position = position
         int_marker.scale = 1
 
@@ -377,7 +378,7 @@ class InteractiveMarkerUtils:
 
     def makeViewFacingMarker(self, position):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "base_link"
+        int_marker.header.frame_id = self.parent_link
         int_marker.pose.position = position
         int_marker.scale = 1
 
@@ -407,7 +408,7 @@ class InteractiveMarkerUtils:
 
     def makeQuadrocopterMarker(self, position):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "base_link"
+        int_marker.header.frame_id = self.parent_link
         int_marker.pose.position = position
         int_marker.scale = 1
 
@@ -430,7 +431,7 @@ class InteractiveMarkerUtils:
 
     def makeChessPieceMarker(self, position):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "base_link"
+        int_marker.header.frame_id = self.parent_link
         int_marker.pose.position = position
         int_marker.scale = 1
 
@@ -458,7 +459,7 @@ class InteractiveMarkerUtils:
 
     def makePanTiltMarker(self, position):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "base_link"
+        int_marker.header.frame_id = self.parent_link
         int_marker.pose.position = position
         int_marker.scale = 1
 
@@ -489,7 +490,7 @@ class InteractiveMarkerUtils:
 
     def makeMenuMarker(self, position):
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = "base_link"
+        int_marker.header.frame_id = self.parent_link
         int_marker.pose.position = position
         int_marker.scale = 1
 

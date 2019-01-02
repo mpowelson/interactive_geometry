@@ -67,12 +67,15 @@ if __name__ == '__main__':
     global_vars.c_scale = rospy.get_param('~c', 1.0)
     rospack = rospkg.RosPack()
     filename = rospy.get_param('~filename', rospack.get_path('interactive_geometry') + '/output.stl')
+    num_pts = rospy.get_param('~num_pts', 20)
+    parent_link = rospy.get_param('~parent_link', 'world')
 
     # Set up things
     server = InteractiveMarkerServer("basic_controls")
     broadcaster = TransformBroadcaster()
     listener = TransformListener()
     util = InteractiveMarkerUtils(server, broadcaster, pub_marker)
+    util.parent_link = parent_link
     exporter = MeshExporter()
 
     # Make central control to move mesh
@@ -98,11 +101,11 @@ if __name__ == '__main__':
     server.applyChanges()
 
     # Generate the initial ellipsoid
-    gen = EllipsoidGenerator(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale)
+    gen = EllipsoidGenerator(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale, num_pts)
     gen.generate_ellipsoid()
 
     # Setup for loop
-    broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), "base_link", "mesh_frame" )
+    broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), parent_link, "mesh_frame" )
     rate = rospy.Rate(30) # 30hz
     seq = 0
     while not rospy.is_shutdown():
@@ -112,10 +115,10 @@ if __name__ == '__main__':
 
         # Rebroadcast the tf
         try:
-            (trans,rot) = listener.lookupTransform("base_link", "mesh_frame", rospy.Time(0))
-            broadcaster.sendTransform( trans, rot, rospy.Time.now(), "mesh_frame", "base_link",)
+            (trans,rot) = listener.lookupTransform(parent_link, "mesh_frame", rospy.Time(0))
+            broadcaster.sendTransform( trans, rot, rospy.Time.now(), "mesh_frame", parent_link,)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(),  "mesh_frame", "base_link" )
+            broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(),  "mesh_frame", parent_link )
             print("Resetting TF")
             continue
 

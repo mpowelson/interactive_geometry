@@ -6,8 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /InteractiveMarkers1
-        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
       Splitter Ratio: 0.5
@@ -57,7 +55,7 @@ Visualization Manager:
       Marker Topic: /mesh_marker
       Name: Marker
       Namespaces:
-        {}
+        interactive_geometry: true
       Queue Size: 100
       Value: true
     - Class: rviz/InteractiveMarkers
@@ -74,7 +72,7 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_link:
+        mesh_frame:
           Value: true
         world:
           Value: true
@@ -85,7 +83,7 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          base_link:
+          mesh_frame:
             {}
       Update Interval: 0
       Value: true
@@ -129,10 +127,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.640398443
+      Pitch: 0.585398495
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.7235713
+      Yaw: 5.47857761
     Saved: ~
 Window Geometry:
   Displays:

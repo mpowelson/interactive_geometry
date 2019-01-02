@@ -8,7 +8,8 @@ import numpy as np
 class EllipsoidGenerator:
     """ Used to generate a half-ellipsoid mesh.
 
-    Upon construction, a sphere of vertices is created. Then the sphere vertices are streched into an ellipsoid and the faces are created
+    Upon construction, a sphere of vertices is created. Then the sphere vertices are streched into an ellipsoid and the faces are created.
+    num_pts is the number of points in each vertex row an column. So there are num_pts^2 vertices and 2*(num_pts-1)^2 faces
     TODO: Make configurable to generate half ellipsoid, full ellipsoid, etc.
     """
     a = 1

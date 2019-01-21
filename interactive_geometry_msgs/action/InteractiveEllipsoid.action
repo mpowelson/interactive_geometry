@@ -1,10 +1,13 @@
 #goal definition
-string results_directory
+string results_directory                                # Directory where the resulting mesh is stored
+int32 num_pts                                           # Number of points use per dimension of the grid.
+string parent_link                                      # Parent link of the mesh
+string mesh_link                                        # Name of the mesh link
 ---
 #result definition
 bool success
 string error_msg
-string results_path
+string results_path                                     # Path to the resulting mesh
 
 ---
 #feedback

@@ -1,0 +1,12 @@
+#goal definition
+string results_directory
+---
+#result definition
+bool success
+string error_msg
+string results_path
+
+---
+#feedback
+string status_msg
+interactive_geometry_msgs/Ellipsoid ellipsoid

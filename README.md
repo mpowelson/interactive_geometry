@@ -5,6 +5,9 @@ This is a ROS package for interacting with geometry of various shapes in RVIZ. T
 
 Currently only an half-ellipsoid is implemented, but other choices might be
 
+* Line
+* Arc
+* Spline
 * Rectangular prism
 * Full ellipsoid
 * Plane

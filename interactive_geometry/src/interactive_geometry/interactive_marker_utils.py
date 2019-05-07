@@ -63,7 +63,7 @@ class InteractiveMarkerUtils:
         self.pub_marker = pub
         self.server = serv
         self.br = broadcaster
-        self.menu_handler.insert( "Export mesh as STL", callback=self.menuCallback1)
+        self.menu_handler.insert( "Export mesh as STL", callback=self.menuCallback1 )
         self.menu_handler.insert( "Do something else!", callback=self.menuCallback2 )
 
     def menuCallback1(self, feedback):

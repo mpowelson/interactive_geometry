@@ -136,6 +136,7 @@ if __name__ == '__main__':
             exporter.mesh_to_stl(gen.vertices, gen.faces, filename)
             util.save_file = False
             print("Exported mesh as " + filename)
+            break;
 
         # Publish the mesh
         pub_marker.publish(marker)

@@ -50,13 +50,23 @@ class EllipsoidAction(object):
     _result = interactive_geometry_msgs.msg.InteractiveEllipsoidResult()
 
     def __init__(self, name):
+        # Mesh publisher
+        self._pub_marker = rospy.Publisher('mesh_marker', Marker, queue_size=10)
+
+        # Set Marker server and TF
+        self._server = InteractiveMarkerServer("basic_controls")
+        self._broadcaster = TransformBroadcaster()
+        self._listener = TransformListener()
+
+        # Utilities class for manipulating interactive marker
+        self._util = InteractiveMarkerUtils(self._server, self._broadcaster, self._pub_marker)
+
         # Setup action server
         self._action_name = name
         self._as = actionlib.SimpleActionServer(self._action_name, interactive_geometry_msgs.msg.InteractiveEllipsoidAction, execute_cb=self.execute_cb, auto_start = False)
         self._as.start()
 
     def execute_cb(self, goal):
-        pub_marker = rospy.Publisher('mesh_marker', Marker, queue_size=10)
 
         # Read ROS parameters
         global_vars.a_scale = rospy.get_param('~a', 1.0)
@@ -69,45 +79,39 @@ class EllipsoidAction(object):
         parent_link = goal.parent_link
         mesh_link = goal.mesh_link
 
-        # Set Marker server and TF
-        server = InteractiveMarkerServer("basic_controls")
-        broadcaster = TransformBroadcaster()
-        listener = TransformListener()
-
         # Set up generation utilities
-        util = InteractiveMarkerUtils(server, broadcaster, pub_marker)
-        util.parent_link = parent_link
-        util.mesh_link = mesh_link
+        self._util.parent_link = parent_link
+        self._util.mesh_link = mesh_link
         exporter = MeshExporter()
 
         # Make central control to move mesh
         position = Point(0, 0, 0)
-        util.make6DofMarker(False, InteractiveMarkerControl.MOVE_3D, position, True)
-        server.applyChanges()
+        self._util.make6DofMarker(False, InteractiveMarkerControl.MOVE_3D, position, True)
+        self._server.applyChanges()
 
         # Make controls to resize mesh (positive direction)
         position = Point(global_vars.a_scale, 0,  0)
-        util.makeMovingMarker( position, "a", axis=0)
+        self._util.makeMovingMarker( position, "a", axis=0)
         position = Point(0, global_vars.b_scale,  0)
-        util.makeMovingMarker( position, "b", axis=1)
+        self._util.makeMovingMarker( position, "b", axis=1)
         position = Point(0, 0, global_vars.c_scale)
-        util.makeMovingMarker( position, "c", axis=2)
+        self._util.makeMovingMarker( position, "c", axis=2)
 
         # Make controls to resize mesh (negative directon)
         position = Point(-1*global_vars.a_scale, 0,  0)
-        util.makeMovingMarker( position, "a_neg", axis=0)
+        self._util.makeMovingMarker( position, "a_neg", axis=0)
         position = Point(0, 0, -1*global_vars.c_scale)
-        util.makeMovingMarker( position, "c_neg", axis=2)
+        self._util.makeMovingMarker( position, "c_neg", axis=2)
 
         # 'commit' changes and send to all clients
-        server.applyChanges()
+        self._server.applyChanges()
 
         # Generate the initial ellipsoid
         gen = EllipsoidGenerator(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale, num_pts)
         gen.generate_ellipsoid()
 
         # Setup for loop
-        broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), parent_link, mesh_link )
+        self._broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), parent_link, mesh_link )
         rate = rospy.Rate(30) # 30hz
         seq = 0
         finished = False
@@ -118,10 +122,10 @@ class EllipsoidAction(object):
 
             # Rebroadcast the tf
             try:
-                (trans,rot) = listener.lookupTransform(parent_link, mesh_link, rospy.Time(0))
-                broadcaster.sendTransform( trans, rot, rospy.Time.now(), mesh_link, parent_link,)
+                (trans,rot) = self._listener.lookupTransform(parent_link, mesh_link, rospy.Time(0))
+                self._broadcaster.sendTransform( trans, rot, rospy.Time.now(), mesh_link, parent_link,)
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(),  mesh_link, parent_link )
+                self._broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(),  mesh_link, parent_link )
                 print("Resetting TF")
                 continue
 
@@ -131,9 +135,9 @@ class EllipsoidAction(object):
             marker.header.stamp = rospy.Time.now()
 
             # Save mesh if button clicked
-            if util.save_file == True:
+            if self._util.save_file == True:
                 exporter.mesh_to_stl(gen.vertices, gen.faces, filename)
-                util.save_file = False
+                self._util.save_file = False
                 print("Exported mesh as " + filename)
                 self._result.results_path = filename
                 self._result.success = True
@@ -142,7 +146,11 @@ class EllipsoidAction(object):
 
 
             # Publish the mesh
-            pub_marker.publish(marker)
+            self._pub_marker.publish(marker)
+
+        # Hide the controls, but leave the mesh showing
+        self._server.clear()
+        self._server.applyChanges()
 
 
 

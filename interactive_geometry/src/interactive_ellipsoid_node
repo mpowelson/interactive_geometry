@@ -119,7 +119,6 @@ if __name__ == '__main__':
 
         # Update the ellipsoid
         gen.update_ellipsoid(global_vars.a_scale, global_vars.b_scale, global_vars.c_scale)
-        print(gen.vertices.shape())
 
         # Rebroadcast the tf
         try:

@@ -118,7 +118,6 @@ class EllipsoidAction(object):
         rate = rospy.Rate(30) # 30hz
         seq = 0
         finished = False
-        print("HELLO")
         while not finished:
 
             # Update the ellipsoid

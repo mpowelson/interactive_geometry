@@ -29,6 +29,7 @@ import tf
 
 # Import pure Python modules
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 # Import package modules
 from interactive_geometry.ellipsoid_generator import *
@@ -111,10 +112,13 @@ class EllipsoidAction(object):
         gen.generate_ellipsoid()
 
         # Setup for loop
-        self._broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), parent_link, mesh_link )
+        trans = (0, 0, 0)
+        rot = (0, 0, 0, 1.0)
+        self._broadcaster.sendTransform( trans, rot, rospy.Time.now(), parent_link, mesh_link )
         rate = rospy.Rate(30) # 30hz
         seq = 0
         finished = False
+        print("HELLO")
         while not finished:
 
             # Update the ellipsoid
@@ -136,6 +140,13 @@ class EllipsoidAction(object):
 
             # Save mesh if button clicked
             if self._util.save_file == True:
+                # Transform the vertices
+                rotation_matrix = Rotation.from_quat(rot)
+                print(gen.vertices.shape)
+                gen.vertices = (rotation_matrix.apply(gen.vertices))
+                print(gen.vertices.shape)
+
+                # Save to file
                 exporter.mesh_to_stl(gen.vertices, gen.faces, filename)
                 self._util.save_file = False
                 print("Exported mesh as " + filename)

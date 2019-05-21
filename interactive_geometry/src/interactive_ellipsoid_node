@@ -137,11 +137,13 @@ if __name__ == '__main__':
 
         # Save mesh if button clicked
         if util.save_file == True:
-            # Transform the vertices
+            # Rotate the vertices
             rotation_matrix = Rotation.from_quat(rot)
-            print(gen.vertices.shape)
-            gen.vertices = (rotation_matrix.apply(gen.vertices.T)).T
-            print(gen.vertices.shape)
+            gen.vertices = (rotation_matrix.apply(gen.vertices))
+
+            # Translate the vertices - the 1D vector is broadcast
+            # across the matrix, added to every coordinate
+            gen.vertices += np.array(trans)
 
             # Save to file
             exporter.mesh_to_stl(gen.vertices, gen.faces, filename)

@@ -111,7 +111,9 @@ class EllipsoidAction(object):
         gen.generate_ellipsoid()
 
         # Setup for loop
-        self._broadcaster.sendTransform( (0, 0, 0), (0, 0, 0, 1.0), rospy.Time.now(), parent_link, mesh_link )
+        trans = (0, 0, 0)
+        rot = (0, 0, 0, 1.0)
+        self._broadcaster.sendTransform( trans, rot, rospy.Time.now(), parent_link, mesh_link )
         rate = rospy.Rate(30) # 30hz
         seq = 0
         finished = False
@@ -136,6 +138,24 @@ class EllipsoidAction(object):
 
             # Save mesh if button clicked
             if self._util.save_file == True:
+                # Generate the transform matrix
+                transform_converter = tf.TransformerROS()
+                transformation_matrix = transform_converter.fromTranslationRotation(trans, rot)
+
+                # Add a column of ones to the vertices - this makes the
+                # dimensions match, and ensures the translation applies.
+                extra_column = np.ones((gen.vertices.shape[0],1))
+                padded = np.append(gen.vertices, extra_column, 1)
+
+                # Ordinarily, we would left-multiply the transform. However, the padded array
+                # would need to be transposed, and then the result transposed again. We use the
+                # identity (AB)T = (B)T(A)T to switch the order around and only transpose the transform
+                transformed = np.matmul(padded.astype(float), np.transpose(transformation_matrix).astype(float))
+
+                # Assign the transformed vertices (without padding) to the mesh
+                gen.vertices = transformed[:,[0,1,2]]
+
+                # Save to file
                 exporter.mesh_to_stl(gen.vertices, gen.faces, filename)
                 self._util.save_file = False
                 print("Exported mesh as " + filename)
@@ -143,7 +163,6 @@ class EllipsoidAction(object):
                 self._result.success = True
                 self._as.set_succeeded(self._result)
                 finished = True
-
 
             # Publish the mesh
             self._pub_marker.publish(marker)

@@ -2,6 +2,7 @@
 
 This is a ROS package for interacting with geometry of various shapes in RVIZ. The idea is that a person might want to drag a geometric object around in RVIZ and then export that for use elsewhere. This is currently achieved by using a triange array marker to display a mesh and then adding interactive markers at the edges that dynamically resize the mesh. A menu interactive marker allows the user to export the mesh.
 
+![Interactive Ellipsoid](gh_pages/_static/interactive_ellipsoid.gif)
 
 Currently only an half-ellipsoid is implemented, but other choices might be
 
